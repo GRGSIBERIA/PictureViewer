@@ -12,12 +12,16 @@ void Main()
 	// 大きさ 60 のフォントを用意
 	const Font font(60);
 
-	sqlite3_open(db::path.toUTF8().c_str(), &db::connection);
+	db::connectDB();
+
+	db::manuallyDropTables();	// !!! テーブルを手動ですべて削除
+
+	db::initializeTables();
 
 	while (System::Update())
 	{
 		
 	}
 
-	sqlite3_close(db::connection);
+	db::closeDB();
 }
