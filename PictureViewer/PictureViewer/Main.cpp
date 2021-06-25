@@ -1,6 +1,7 @@
 ﻿
 #include <Siv3D.hpp> // OpenSiv3D v0.4.3
 #include "Database.hpp"
+#include "Table.hpp"
 
 void Main()
 {
@@ -22,6 +23,8 @@ void Main()
 	{
 		
 	}
+
+	db::finalizeTables();
 
 	db::closeDB();
 }
