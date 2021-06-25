@@ -332,3 +332,7 @@ ASALocalRun/
 
 # Local History for Visual Studio
 .localhistory/
+PictureViewer/PictureViewer/App/AS_DEBUG/stats.txt
+PictureViewer/PictureViewer/App/database.db
+*.exe
+PictureViewer/PictureViewer/App/PictureViewer(debug)_log.html
