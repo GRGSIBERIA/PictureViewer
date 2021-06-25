@@ -146,7 +146,7 @@ namespace db
 		auto ret = sqlite3_exec(connection,
 			"drop table image_t;"
 			"drop table info_t;"
-			"drop table thumbnail_t;"
+			"drop table thumb_t;"
 			"drop table tag_t;"
 			"drop table image_tags_t;",
 			NULL, NULL, &errMsg

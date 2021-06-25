@@ -97,6 +97,12 @@
     <Filter Include="Resource Files\example\zip">
       <UniqueIdentifier>{81d8d80c-f0ce-492f-8fee-c5502c31bc0e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\SQLite3">
+      <UniqueIdentifier>{f004ea08-aa16-4e81-b9b8-5a80208eab9f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Database">
+      <UniqueIdentifier>{4c12ea45-c841-47bd-9de2-2af921f0298e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -379,14 +385,17 @@
     </Xml>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Database.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="sqlite3.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\SQLite3</Filter>
     </ClInclude>
     <ClInclude Include="sqlite3ext.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\SQLite3</Filter>
+    </ClInclude>
+    <ClInclude Include="Database.hpp">
+      <Filter>Header Files\Database</Filter>
+    </ClInclude>
+    <ClInclude Include="Table.hpp">
+      <Filter>Header Files\Database</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
