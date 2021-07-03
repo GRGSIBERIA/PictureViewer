@@ -14,7 +14,7 @@ void Main()
 	// 大きさ 60 のフォントを用意
 	const Font font(60);
 	conf::Config config = conf::initialize();
-
+	
 	db::connectDB();
 
 	db::manuallyDropTables();	// !!! テーブルを手動ですべて削除
