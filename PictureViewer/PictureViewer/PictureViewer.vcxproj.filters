@@ -397,5 +397,8 @@
     <ClInclude Include="Table.hpp">
       <Filter>Header Files\Database</Filter>
     </ClInclude>
+    <ClInclude Include="MemoryReader.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

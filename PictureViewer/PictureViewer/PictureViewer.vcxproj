@@ -239,6 +239,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Database.hpp" />
+    <ClInclude Include="MemoryReader.hpp" />
     <ClInclude Include="sqlite3.h" />
     <ClInclude Include="sqlite3ext.h" />
     <ClInclude Include="Table.hpp" />
