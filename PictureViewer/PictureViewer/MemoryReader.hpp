@@ -15,18 +15,20 @@ public:
 		memcpy_s(buffer, size, _buffer, size);
 	}
 
-	virtual ~MemoryReader() {
+	virtual ~MemoryReader() 
+	{
 		free(buffer);
 	}
 
 	bool isOpen() const override { return true; }
 
-	int64 size() const override { return (int64)size; }
+	int64 size() const override { return size; }
 
 	int64 getPos() const override { return pos; }
 
-	bool setPos(int64 newPos) override { 
-		pos = newPos; 
+	bool setPos(int64 newPos) override 
+	{ 
+		pos = newPos >= size ? size : newPos;
 		return true;
 	}
 
@@ -76,7 +78,7 @@ public:
 		return read(dest, _size);
 	}
 
-	int64 lookahead(void* _buffer, int64 _size) const
+	int64 lookahead(void* _buffer, int64 _size) const override
 	{
 		if (pos + _size >= size)
 		{
@@ -88,12 +90,27 @@ public:
 		{
 			return 0;
 		}
-		memcpy_s(_buffer, _size, buffer, _size);
+		memcpy_s(_buffer, _size, (void*)((int64)buffer + pos), _size);
 		return _size;
 	}
 
-	int64 lookahead(void* _buffer, int64 _pos, int64 _size) const
+	int64 lookahead(void* _buffer, int64 _pos, int64 _size) const override
 	{
+		if (_pos >= _size || _size < 0)
+		{
+			return 0;
+		}
 
+		if (_pos + _size > size)
+		{
+			int64 can_read = size - _size - _pos;
+			memcpy_s(_buffer, _size, (void*)((int64)buffer + _pos), can_read);
+			return can_read;
+		}
+		else if (_pos + _size < size)
+		{
+			memcpy_s(_buffer, _size, (void*)((int64)buffer + _pos), _size);
+		}
+		return 0;
 	}
 };
