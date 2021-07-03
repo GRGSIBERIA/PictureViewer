@@ -397,10 +397,10 @@
     <ClInclude Include="Table.hpp">
       <Filter>Header Files\Database</Filter>
     </ClInclude>
-    <ClInclude Include="MemoryReader.hpp">
+    <ClInclude Include="Config.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Config.hpp">
+    <ClInclude Include="ImageReader.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

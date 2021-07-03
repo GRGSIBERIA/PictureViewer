@@ -240,7 +240,7 @@
   <ItemGroup>
     <ClInclude Include="Config.hpp" />
     <ClInclude Include="Database.hpp" />
-    <ClInclude Include="MemoryReader.hpp" />
+    <ClInclude Include="ImageReader.hpp" />
     <ClInclude Include="sqlite3.h" />
     <ClInclude Include="sqlite3ext.h" />
     <ClInclude Include="Table.hpp" />
