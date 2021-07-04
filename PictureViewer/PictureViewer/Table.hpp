@@ -124,7 +124,8 @@ namespace db
 	public:
 		ImageToTagsTable() : Table(
 			U"image_tags_t",
-			U"imageid integer, tagid integer") {}
+			U"imageid integer foreign_key references image_t(id) not null, "
+			U"tagid integer foreign_key references tag_t(id) not null") {}
 	};
 
 	ImageTable* image_t = nullptr;
@@ -132,18 +133,30 @@ namespace db
 	TagTable* tag_t = nullptr;
 	ImageToTagsTable* image_tags_t = nullptr;
 
-	const int64 insert_image(sqlite3* connection, const Image& source, bool useTransaction = true)
+	struct ImagePack
 	{
-		void* reserved = image::reserve_address_from_image(source);
+		const int64 id;
+		const Image source;
+		const Image thumb;
+		const std::string source_digest;
+		const std::string thumb_digest;
+	};
+
+	const ImagePack insert_image(sqlite3* connection, const Image& source, bool useTransaction = true)
+	{
+		int64 id;
 		const double wh = source.width() > source.height() ? (double)source.width() : (double)source.height();
 		const double scaling = 128.0 / wh;
-		Image thumb = source.scaled(scaling, s3d::Interpolation::Area);
-		void* thumb_reserved = image::reserve_address_from_image(thumb);
-		int64 id;
-
+		
+		// retval.source = source;
+		const Image thumb = source.scaled(scaling, s3d::Interpolation::Area);
 		const std::string source_digest = Unicode::NarrowAscii(image::get_digest(source));
 		const std::string thumb_digest = Unicode::NarrowAscii(image::get_digest(thumb));
 		
+		if (useTransaction)
+		{
+			sqlite3_exec(connection, "BEGIN TRANSACTION;", NULL, NULL, NULL);
+		}
 		{
 			sqlite3_stmt* statement;
 
@@ -152,6 +165,10 @@ namespace db
 			id = sqlite3_column_int64(statement, 0) + 1;
 			sqlite3_finalize(statement);
 		}
+		ImagePack retval{ 
+			id, std::move(source), std::move(thumb), 
+			std::move(source_digest), std::move(thumb_digest) 
+		};
 		{
 			sqlite3_stmt* statement;
 			sqlite3_prepare_v2(
@@ -170,28 +187,35 @@ namespace db
 			const int s_tdigest = sqlite3_bind_parameter_index(statement, ":tdigest");
 			const int s_tdata = sqlite3_bind_parameter_index(statement, ":tdata");
 
-			sqlite3_bind_int64(statement, s_id, id);
+			sqlite3_bind_int64(statement, s_id, retval.id);
 			sqlite3_bind_int(statement, s_iw, source.width());
 			sqlite3_bind_int(statement, s_ih, source.height());
-			sqlite3_bind_text(statement, s_idigest, source_digest.c_str(), source_digest.size(), nullptr);
+			sqlite3_bind_text(statement, s_idigest, retval.source_digest.c_str(), retval.source_digest.size(), nullptr);
 			sqlite3_bind_blob(statement, s_idata, (void*)source.data(), source.size_bytes(), nullptr);
-			sqlite3_bind_int(statement, s_tw, thumb.width());
-			sqlite3_bind_int(statement, s_th, thumb.height());
-			sqlite3_bind_text(statement, s_tdigest, thumb_digest.c_str(), thumb_digest.size(), nullptr);
-			sqlite3_bind_blob(statement, s_tdata, (void*)thumb.data(), thumb.size_bytes(), nullptr);
+			sqlite3_bind_int(statement, s_tw, retval.thumb.width());
+			sqlite3_bind_int(statement, s_th, retval.thumb.height());
+			sqlite3_bind_text(statement, s_tdigest, retval.thumb_digest.c_str(), retval.thumb_digest.size(), nullptr);
+			sqlite3_bind_blob(statement, s_tdata, (void*)retval.thumb.data(), retval.thumb.size_bytes(), nullptr);
 			sqlite3_step(statement);
 			sqlite3_finalize(statement);
 		}
-		
-		sqlite3_free(thumb_reserved);
-		sqlite3_free(reserved);
+		if (useTransaction)
+		{
+			sqlite3_exec(connection, "END TRANSACTION;", NULL, NULL, NULL);
+		}
 
-		return id;
+		return retval;
 	}
 
-	void insert_images(sqlite3* connection, const Array<Image> imgs)
+	const Array<ImagePack> insert_images(sqlite3* connection, const Array<Image> imgs)
 	{
+		Array<ImagePack> retval;
+		sqlite3_exec(connection, "BEGIN TRANSACTION;", NULL, NULL, NULL);
+		for (const auto& img : imgs)
+			retval.emplace_back(insert_image(connection, img, false));
+		sqlite3_exec(connection, "END TRANSACTION;", NULL, NULL, NULL);
 
+		return retval;
 	}
 
 	void initializeTables()
