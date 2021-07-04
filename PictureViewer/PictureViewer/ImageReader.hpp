@@ -12,7 +12,7 @@ namespace image
 	/// <param name="width">幅</param>
 	/// <param name="height">高さ</param>
 	/// <returns>読み込み後のインスタンス</returns>
-	Image read_image(void* source, const uint32& width, const uint32& height)
+	Image read_image_from_bytes(void* source, const uint32& width, const uint32& height)
 	{
 		Image img(width, height);
 		uint32 size = sizeof(Color) * width * height;
@@ -28,7 +28,7 @@ namespace image
 	/// </summary>
 	/// <param name="source">元になる画像のインスタンス</param>
 	/// <returns>コピーされた領域のアドレス</returns>
-	void* reserve_image(const Image& source)
+	void* reserve_address_from_image(const Image& source)
 	{
 		void* dest = sqlite3_malloc(source.size_bytes());
 		memcpy_s(dest, source.size_bytes(), (void*)source.data(), source.size_bytes());
@@ -43,10 +43,10 @@ namespace image
 	/// <returns>SHA256のダイジェスト</returns>
 	const String get_digest(const Image& source)
 	{
+		DWORD cryptSize = 32;
 		HCRYPTPROV prov;
 		HCRYPTHASH hash;
 		PBYTE digest;
-		DWORD cryptSize = 32;
 		String retval = U"";
 
 		CryptAcquireContext(&prov, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT);
