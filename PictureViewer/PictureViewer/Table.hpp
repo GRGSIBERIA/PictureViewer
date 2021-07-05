@@ -11,39 +11,6 @@ namespace db
 		const String name;
 
 	private:
-		const size_t sizeof_string(const std::string& str) const
-		{
-			return str.cend() - str.cbegin();
-		}
-
-		const bool exists_table()
-		{
-			const String exec = U"select count(*) from sqlite_master where type = 'table' AND name=? limit 1;";
-			sqlite3_stmt* statement;
-
-			const std::string tablename_utf8 = name.toUTF8();
-
-			auto ret = sqlite3_prepare(connection, exec.toUTF8().c_str(), (int)exec.toUTF8().size(), &statement, NULL);
-			bool result = false;
-
-			if (ret == SQLITE_OK && statement)
-			{
-				sqlite3_bind_text(statement, 1, tablename_utf8.c_str(), (int)sizeof_string(tablename_utf8), SQLITE_STATIC);
-
-				int col_count = sqlite3_column_count(statement);
-				if (col_count == 1)
-				{
-					sqlite3_step(statement);
-					int exists = sqlite3_column_int(statement, 1);
-
-					if (exists == 1)
-						result = true;
-				}
-
-				sqlite3_finalize(statement);
-			}
-			return result;
-		}
 
 		const bool occurred_error_writes_message_to_log(const int ok, char* err_msg) const
 		{
@@ -60,15 +27,12 @@ namespace db
 		const bool create_table(const String& arguments)
 		{
 			bool result = true;
+			char* err_msg;
+			const String exec = U"create table if not exists {0} ({1});"_fmt(name, arguments);
 
-			if (!exists_table())
-			{
-				char* err_msg;
-				const String exec = U"create table if not exists {0} ({1});"_fmt(name, arguments);
-
-				auto ret = sqlite3_exec(connection, exec.toUTF8().c_str(), NULL, NULL, &err_msg);
-				result = occurred_error_writes_message_to_log(ret, err_msg);
-			}
+			auto ret = sqlite3_exec(connection, exec.toUTF8().c_str(), NULL, NULL, &err_msg);
+			result = occurred_error_writes_message_to_log(ret, err_msg);
+			
 			return result;
 		}
 
