@@ -14,6 +14,7 @@ namespace db
 		{
 			isOpenDB = true;
 		}
+		sqlite3_exec(connection, "pragma FOREIGN_KEYS=ON;", NULL, NULL, NULL);
 		return isOpenDB;
 	}
 

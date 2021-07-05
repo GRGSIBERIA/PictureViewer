@@ -28,9 +28,8 @@ namespace db
 		{
 			bool result = true;
 			char* err_msg;
-			const String exec = U"create table if not exists {0} ({1});"_fmt(name, arguments);
-
-			auto ret = sqlite3_exec(connection, exec.toUTF8().c_str(), NULL, NULL, &err_msg);
+			
+			auto ret = sqlite3_exec(connection, arguments.toUTF8().c_str(), NULL, NULL, &err_msg);
 			result = occurred_error_writes_message_to_log(ret, err_msg);
 			
 			return result;
@@ -45,9 +44,9 @@ namespace db
 		}
 
 	public:
-		Table(const String& _name, const String& create_table_in_brack, const String& index_sql) : name(_name)
+		Table(const String& _name, const String& create_table_sql, const String& index_sql) : name(_name)
 		{
-			create_table(create_table_in_brack);
+			create_table(create_table_sql);
 
 			if (index_sql != U"")
 				create_index(_name, index_sql);
@@ -59,12 +58,13 @@ namespace db
 	public:
 		ImageTable() : Table(
 			U"image_t",
-			U"id integer primary key autoincrement unique, "
-			U"width integer not null, "
-			U"height integer not null, "
-			U"digest text not null"
-			U"data blob not null",
-			U"create index if not exists digest_image_index on image_t(digest asc);") {}
+			U"create table if not exists image_t ("
+			U"	id integer primary key autoincrement unique, "
+			U"	width integer not null, "
+			U"	height integer not null, "
+			U"	digest text not null,"
+			U"	data blob not null);",
+			U"create unique index if not exists digest_image_index on image_t(digest asc);") {}
 	};
 
 	class ThumbTable : public Table
@@ -72,12 +72,14 @@ namespace db
 	public:
 		ThumbTable() : Table(
 			U"thumb_t",
-			U"imageid integer unique foreign_key references image_t(id) not null, "
-			U"width integer not null,"
-			U"height integer not null,"
-			U"digest text not null,"
-			U"data blob not null",
-			U"create index if not exists digest_thumb_index on thumb_t(digest asc);") {}
+			U"create table if not exists thumb_t ("
+			U"	imageid integer unique not null references image_t(id) on update cascade on delete cascade, "
+			U"	width integer not null,"
+			U"	height integer not null,"
+			U"	digest text not null,"
+			U"	data blob not null);",
+			U"create unique index if not exists imageid_thumb_index on thumb_t(imageid asc);"
+			U"create unique index if not exists digest_thumb_index on thumb_t(digest asc);") {}
 	};
 
 	class TagTable : public Table
@@ -85,8 +87,9 @@ namespace db
 	public:
 		TagTable() : Table(
 			U"tag_t",
-			U"id integer primary key autoincrement unique not null, "
-			U"name text unique not null",
+			U"create table if not exists tag_t("
+			U"	id integer primary key autoincrement unique not null, "
+			U"	name text unique not null);",
 			U"create index if not exists name_tag_index on tag_t(name asc);") {}
 	};
 
@@ -95,8 +98,9 @@ namespace db
 	public:
 		TagAssignTable() : Table(
 			U"tag_assign_t",
-			U"imageid integer foreign_key references image_t(id) not null, "
-			U"tagid integer foreign_key references tag_t(id) not null",
+			U"create table if not exists tag_assign_t("
+			U"	imageid integer not null references image_t(id) on update cascade on delete cascade, "
+			U"	tagid integer not null references tag_t(id) on update cascade on delete cascade);",
 			U"create unique index if not exists imageid_tagid_tag_assign_index on tag_assign_t(imageid, tagid);") {}
 	};
 
@@ -155,7 +159,8 @@ namespace db
 				connection,
 				"insert all"
 				"  into image_t(id, width, height, digest, data) values(:id, :iw, :ih, :idigest, :idata)"
-				"  into thumb_t(imageid, width, height, digest, data) values (:id, :tw, :th, :tdigest, :tdata);",
+				"  into thumb_t(imageid, width, height, digest, data) values (:id, :tw, :th, :tdigest, :tdata)"
+				"  select * from dual;",
 				-1, &statement, nullptr);
 			const int s_id = sqlite3_bind_parameter_index(statement, ":id");
 			const int s_iw = sqlite3_bind_parameter_index(statement, ":iw");
