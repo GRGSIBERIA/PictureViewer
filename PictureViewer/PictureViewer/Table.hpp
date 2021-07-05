@@ -11,14 +11,14 @@ namespace db
 		const String name;
 
 	private:
-		const size_t sizeofString(const std::string& str)
+		const size_t sizeof_string(const std::string& str) const
 		{
 			return str.cend() - str.cbegin();
 		}
 
-		const bool existsTable()
+		const bool exists_table()
 		{
-			const String exec = U"select count(*) from sqlite_master where type = 'table' AND name=?;";
+			const String exec = U"select count(*) from sqlite_master where type = 'table' AND name=? limit 1;";
 			sqlite3_stmt* statement;
 
 			const std::string tablename_utf8 = name.toUTF8();
@@ -28,7 +28,7 @@ namespace db
 
 			if (ret == SQLITE_OK && statement)
 			{
-				sqlite3_bind_text(statement, 1, tablename_utf8.c_str(), (int)sizeofString(tablename_utf8), SQLITE_STATIC);
+				sqlite3_bind_text(statement, 1, tablename_utf8.c_str(), (int)sizeof_string(tablename_utf8), SQLITE_STATIC);
 
 				int col_count = sqlite3_column_count(statement);
 				if (col_count == 1)
@@ -45,35 +45,48 @@ namespace db
 			return result;
 		}
 
-		bool createTable(const String& arguments)
+		const bool occurred_error_writes_message_to_log(const int ok, char* err_msg) const
 		{
 			bool result = true;
-
-			if (!exists())
+			if (ok != SQLITE_OK)
 			{
-				char* errMsg;
-				const String exec = U"create table if not exists {0} ({1});"_fmt(name, arguments);
-
-				auto ret = sqlite3_exec(connection, exec.toUTF8().c_str(), NULL, NULL, &errMsg);
-				if (ret != SQLITE_OK)
-				{
-					Logger << Unicode::FromUTF8(errMsg) << U"\n";
-					sqlite3_free(errMsg);
-					result = false;
-				}
+				Logger << Unicode::FromUTF8(err_msg) << U"\n";
+				sqlite3_free(err_msg);
+				result = false;
 			}
 			return result;
 		}
 
-	public:
-		Table(const String& _name, const String& create_table_in_brack) : name(_name)
+		const bool create_table(const String& arguments)
 		{
-			createTable(create_table_in_brack);
+			bool result = true;
+
+			if (!exists_table())
+			{
+				char* err_msg;
+				const String exec = U"create table if not exists {0} ({1});"_fmt(name, arguments);
+
+				auto ret = sqlite3_exec(connection, exec.toUTF8().c_str(), NULL, NULL, &err_msg);
+				result = occurred_error_writes_message_to_log(ret, err_msg);
+			}
+			return result;
 		}
 
-		const bool exists()
+		const bool create_index(const String& table_name, const String& index_sql)
 		{
-			return existsTable();
+			char* err_msg;
+			auto ret = sqlite3_exec(connection, index_sql.toUTF8().c_str(), NULL, NULL, &err_msg);
+
+			return occurred_error_writes_message_to_log(ret, err_msg);
+		}
+
+	public:
+		Table(const String& _name, const String& create_table_in_brack, const String& index_sql) : name(_name)
+		{
+			create_table(create_table_in_brack);
+
+			if (index_sql != U"")
+				create_index(_name, index_sql);
 		}
 	};
 
@@ -86,7 +99,8 @@ namespace db
 			U"width integer not null, "
 			U"height integer not null, "
 			U"digest text not null"
-			U"data blob not null") {}
+			U"data blob not null",
+			U"create index if not exists digest_image_index on image_t(digest asc);") {}
 	};
 
 	class ThumbTable : public Table
@@ -98,7 +112,8 @@ namespace db
 			U"width integer not null,"
 			U"height integer not null,"
 			U"digest text not null,"
-			U"data blob not null") {}
+			U"data blob not null",
+			U"create index if not exists digest_thumb_index on thumb_t(digest asc);") {}
 	};
 
 	class TagTable : public Table
@@ -107,31 +122,24 @@ namespace db
 		TagTable() : Table(
 			U"tag_t",
 			U"id integer primary key autoincrement unique not null, "
-			U"name text unique not null") {}
+			U"name text unique not null",
+			U"create index if not exists name_tag_index on tag_t(name asc);") {}
 	};
 
 	class TagAssignTable : public Table
 	{
 	public:
 		TagAssignTable() : Table(
-			U"tag_asign_t",
+			U"tag_assign_t",
 			U"imageid integer foreign_key references image_t(id) not null, "
-			U"tagid integer foreign_key references tag_t(id) not null") {}
-	};
-
-	class ImageToTagsTable : public Table
-	{
-	public:
-		ImageToTagsTable() : Table(
-			U"image_tags_t",
-			U"imageid integer foreign_key references image_t(id) not null, "
-			U"tagid integer foreign_key references tag_t(id) not null") {}
+			U"tagid integer foreign_key references tag_t(id) not null",
+			U"create unique index if not exists imageid_tagid_tag_assign_index on tag_assign_t(imageid, tagid);") {}
 	};
 
 	ImageTable* image_t = nullptr;
 	ThumbTable* thumb_t = nullptr;
 	TagTable* tag_t = nullptr;
-	ImageToTagsTable* image_tags_t = nullptr;
+	TagAssignTable* image_tags_t = nullptr;
 
 	struct ImagePack
 	{
@@ -142,9 +150,21 @@ namespace db
 		const std::string thumb_digest;
 	};
 
-	const ImagePack insert_image(sqlite3* connection, const Image& source, bool useTransaction = true)
+	const int64 get_unuse_id(sqlite3* connection)
 	{
-		int64 id;
+		sqlite3_stmt* statement;
+
+		sqlite3_prepare_v2(connection, "select max(id) from image_t limit 1;", -1, &statement, nullptr);
+		sqlite3_step(statement);
+		int64 id = sqlite3_column_int64(statement, 0) + 1;
+		sqlite3_finalize(statement);
+
+		return id;
+	}
+
+	const ImagePack insert_image(sqlite3* connection, const Image& source, const int64 usually_id = -1, const bool use_transaction = true)
+	{
+		int64 id = usually_id;
 		const double wh = source.width() > source.height() ? (double)source.width() : (double)source.height();
 		const double scaling = 128.0 / wh;
 		
@@ -153,17 +173,13 @@ namespace db
 		const std::string source_digest = Unicode::NarrowAscii(image::get_digest(source));
 		const std::string thumb_digest = Unicode::NarrowAscii(image::get_digest(thumb));
 		
-		if (useTransaction)
+		if (use_transaction)
 		{
 			sqlite3_exec(connection, "BEGIN TRANSACTION;", NULL, NULL, NULL);
 		}
+		if (usually_id < 0)
 		{
-			sqlite3_stmt* statement;
-
-			sqlite3_prepare_v2(connection, "select max(id) from image_t limit 1;", -1, &statement, nullptr);
-			sqlite3_step(statement);
-			id = sqlite3_column_int64(statement, 0) + 1;
-			sqlite3_finalize(statement);
+			id = get_unuse_id(connection);
 		}
 		ImagePack retval{ 
 			id, std::move(source), std::move(thumb), 
@@ -199,7 +215,7 @@ namespace db
 			sqlite3_step(statement);
 			sqlite3_finalize(statement);
 		}
-		if (useTransaction)
+		if (use_transaction)
 		{
 			sqlite3_exec(connection, "END TRANSACTION;", NULL, NULL, NULL);
 		}
@@ -210,23 +226,27 @@ namespace db
 	const Array<ImagePack> insert_images(sqlite3* connection, const Array<Image> imgs)
 	{
 		Array<ImagePack> retval;
+		auto usually_id = get_unuse_id(connection);
 		sqlite3_exec(connection, "BEGIN TRANSACTION;", NULL, NULL, NULL);
 		for (const auto& img : imgs)
-			retval.emplace_back(insert_image(connection, img, false));
+		{
+			retval.emplace_back(insert_image(connection, img, usually_id, false));
+			++usually_id;
+		}
 		sqlite3_exec(connection, "END TRANSACTION;", NULL, NULL, NULL);
 
 		return retval;
 	}
 
-	void initializeTables()
+	void initialize_tables()
 	{
 		image_t = new ImageTable();
 		thumb_t = new ThumbTable();
 		tag_t = new TagTable();
-		image_tags_t = new ImageToTagsTable();
+		image_tags_t = new TagAssignTable();
 	}
 
-	void finalizeTables()
+	void finalize_tables()
 	{
 		delete image_t;
 		delete thumb_t;
@@ -234,7 +254,7 @@ namespace db
 		delete image_tags_t;
 	}
 
-	void manuallyDropTables()
+	void manually_drop_tables()
 	{
 		char* errMsg;
 		auto ret = sqlite3_exec(connection,
