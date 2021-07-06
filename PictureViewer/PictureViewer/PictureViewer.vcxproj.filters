@@ -103,6 +103,9 @@
     <Filter Include="Header Files\Database">
       <UniqueIdentifier>{4c12ea45-c841-47bd-9de2-2af921f0298e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\sql">
+      <UniqueIdentifier>{214bc7ca-6834-4aa5-886d-d59ccf3432d7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -323,6 +326,9 @@
     </None>
     <None Include="App\example\zip\zip_test.zip">
       <Filter>Resource Files\example\zip</Filter>
+    </None>
+    <None Include="App\SQL\initialize_tables.sql">
+      <Filter>Resource Files\sql</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
