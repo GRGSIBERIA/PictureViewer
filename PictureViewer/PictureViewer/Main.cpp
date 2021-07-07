@@ -17,11 +17,9 @@ void Main()
 	
 	db::connectDB();
 
-	db::create_tables();
-	//db::manually_drop_tables();	// !!! テーブルを手動ですべて削除
-
-	//db::initialize_tables();
-
+	db::manually_drop_tables(db::connection);	// !!! テーブルを手動ですべて削除
+	db::create_tables(db::connection);
+	
 	while (System::Update())
 	{
 		if (SimpleGUI::Button(U"Import", { 0, 0 }))
@@ -29,8 +27,6 @@ void Main()
 			s3d::Dialog::SelectFolder();
 		}
 	}
-
-	//db::finalize_tables();
 
 	db::closeDB();
 }
