@@ -58,6 +58,7 @@ Resource(engine/soundfont/GMGSx.sf2.zstdcmp)
 //////////////////////////////////////////////////////
 
 Resource(SQL/initialize_tables.sql)
+Resource(SQL/manually_drop.sql)
 
 /* 
 	//
