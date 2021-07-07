@@ -330,6 +330,9 @@
     <None Include="App\SQL\initialize_tables.sql">
       <Filter>Resource Files\sql</Filter>
     </None>
+    <None Include="App\SQL\manually_drop.sql">
+      <Filter>Resource Files\sql</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Text Include="App\engine\font\fontawesome\LICENSE.txt">

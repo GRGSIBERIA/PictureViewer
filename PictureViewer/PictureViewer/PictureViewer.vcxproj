@@ -177,6 +177,7 @@
     <None Include="App\nlp\japanese\jumanpp\LICENSE" />
     <None Include="App\nlp\japanese\jumanpp\README.md" />
     <None Include="App\SQL\initialize_tables.sql" />
+    <None Include="App\SQL\manually_drop.sql" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="App\engine\font\fontawesome\LICENSE.txt" />

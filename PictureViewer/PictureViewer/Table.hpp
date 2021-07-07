@@ -5,109 +5,37 @@
 
 namespace db
 {
-	class Table
+	const bool occured_error_writes_message_to_log(const int ok, char* err_msg)
 	{
-	public:
-		const String name;
-
-	private:
-
-		const bool occurred_error_writes_message_to_log(const int ok, char* err_msg) const
+		bool result = true;
+		if (ok != SQLITE_OK)
 		{
-			bool result = true;
-			if (ok != SQLITE_OK)
-			{
-				Logger << Unicode::FromUTF8(err_msg) << U"\n";
-				sqlite3_free(err_msg);
-				result = false;
-			}
-			return result;
+			Logger << Unicode::WidenAscii(err_msg);
+			sqlite3_free(err_msg);
+			result = false;
 		}
+		return result;
+	}
 
-		const bool create_table(const String& arguments)
-		{
-			bool result = true;
-			char* err_msg;
-			
-			auto ret = sqlite3_exec(connection, arguments.toUTF8().c_str(), NULL, NULL, &err_msg);
-			result = occurred_error_writes_message_to_log(ret, err_msg);
-			
-			return result;
-		}
-
-		const bool create_index(const String& table_name, const String& index_sql)
-		{
-			char* err_msg;
-			auto ret = sqlite3_exec(connection, index_sql.toUTF8().c_str(), NULL, NULL, &err_msg);
-
-			return occurred_error_writes_message_to_log(ret, err_msg);
-		}
-
-	public:
-		Table(const String& _name, const String& create_table_sql, const String& index_sql) : name(_name)
-		{
-			create_table(create_table_sql);
-
-			if (index_sql != U"")
-				create_index(_name, index_sql);
-		}
-	};
-
-	class ImageTable : public Table
+	const bool create_tables()
 	{
-	public:
-		ImageTable() : Table(
-			U"image_t",
-			U"create table if not exists image_t ("
-			U"	id integer primary key autoincrement unique, "
-			U"	width integer not null, "
-			U"	height integer not null, "
-			U"	digest text not null,"
-			U"	data blob not null);",
-			U"create unique index if not exists digest_image_index on image_t(digest asc);") {}
-	};
+		char* err_msg;
+		auto text = TextReader(s3d::Resource(U"SQL/initialize_tables.sql"));
+		const String sql = text.readAll();
 
-	class ThumbTable : public Table
+		auto ok = sqlite3_exec(connection, sql.toUTF8().c_str(), NULL, NULL, &err_msg);
+		return occured_error_writes_message_to_log(ok, err_msg);
+	}
+
+	const bool manually_drop_tables()
 	{
-	public:
-		ThumbTable() : Table(
-			U"thumb_t",
-			U"create table if not exists thumb_t ("
-			U"	imageid integer unique not null references image_t(id) on update cascade on delete cascade, "
-			U"	width integer not null,"
-			U"	height integer not null,"
-			U"	digest text not null,"
-			U"	data blob not null);",
-			U"create unique index if not exists imageid_thumb_index on thumb_t(imageid asc);"
-			U"create unique index if not exists digest_thumb_index on thumb_t(digest asc);") {}
-	};
+		char* err_msg;
+		auto text = TextReader(s3d::Resource(U"SQL/manually_drop.sql"));
+		const String sql = text.readAll();
 
-	class TagTable : public Table
-	{
-	public:
-		TagTable() : Table(
-			U"tag_t",
-			U"create table if not exists tag_t("
-			U"	id integer primary key autoincrement unique not null, "
-			U"	name text unique not null);",
-			U"create index if not exists name_tag_index on tag_t(name asc);") {}
-	};
-
-	class TagAssignTable : public Table
-	{
-	public:
-		TagAssignTable() : Table(
-			U"tag_assign_t",
-			U"create table if not exists tag_assign_t("
-			U"	imageid integer not null references image_t(id) on update cascade on delete cascade, "
-			U"	tagid integer not null references tag_t(id) on update cascade on delete cascade);",
-			U"create unique index if not exists imageid_tagid_tag_assign_index on tag_assign_t(imageid, tagid);") {}
-	};
-
-	ImageTable* image_t = nullptr;
-	ThumbTable* thumb_t = nullptr;
-	TagTable* tag_t = nullptr;
-	TagAssignTable* image_tags_t = nullptr;
+		auto ok = sqlite3_exec(connection, sql.toUTF8().c_str(), NULL, NULL, &err_msg);
+		return occured_error_writes_message_to_log(ok, err_msg);
+	}
 
 	struct ImagePack
 	{
@@ -205,40 +133,5 @@ namespace db
 		sqlite3_exec(connection, "END TRANSACTION;", NULL, NULL, NULL);
 
 		return retval;
-	}
-
-	void initialize_tables()
-	{
-		image_t = new ImageTable();
-		thumb_t = new ThumbTable();
-		tag_t = new TagTable();
-		image_tags_t = new TagAssignTable();
-	}
-
-	void finalize_tables()
-	{
-		delete image_t;
-		delete thumb_t;
-		delete tag_t;
-		delete image_tags_t;
-	}
-
-	void manually_drop_tables()
-	{
-		char* errMsg;
-		auto ret = sqlite3_exec(connection,
-			"drop table image_t;"
-			"drop table info_t;"
-			"drop table thumb_t;"
-			"drop table tag_t;"
-			"drop table image_tags_t;",
-			NULL, NULL, &errMsg
-		);
-
-		if (ret != SQLITE_OK)
-		{
-			Logger << Unicode::FromUTF8(errMsg) << U"\n";
-			sqlite3_free(errMsg);
-		}
 	}
 }

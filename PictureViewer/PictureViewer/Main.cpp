@@ -17,9 +17,10 @@ void Main()
 	
 	db::connectDB();
 
-	db::manually_drop_tables();	// !!! テーブルを手動ですべて削除
+	db::create_tables();
+	//db::manually_drop_tables();	// !!! テーブルを手動ですべて削除
 
-	db::initialize_tables();
+	//db::initialize_tables();
 
 	while (System::Update())
 	{
@@ -29,7 +30,7 @@ void Main()
 		}
 	}
 
-	db::finalize_tables();
+	//db::finalize_tables();
 
 	db::closeDB();
 }
