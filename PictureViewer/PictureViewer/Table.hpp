@@ -114,7 +114,7 @@ namespace db
 		
 		if (use_transaction)
 		{
-			sqlite3_exec(db_connection, "BEGIN TRANSACTION;", NULL, NULL, NULL);
+			sqlite3_exec(db_connection, "BEGIN;", NULL, NULL, NULL);
 		}
 		if (usually_id < 0)
 		{
@@ -157,7 +157,7 @@ namespace db
 		}
 		if (use_transaction)
 		{
-			sqlite3_exec(db_connection, "END TRANSACTION;", NULL, NULL, NULL);
+			sqlite3_exec(db_connection, "END;", NULL, NULL, NULL);
 		}
 
 		return retval;
@@ -167,13 +167,13 @@ namespace db
 	{
 		Array<ImagePack> retval;
 		auto usually_id = get_unuse_id(db_connection);
-		sqlite3_exec(db_connection, "BEGIN TRANSACTION;", NULL, NULL, NULL);
+		sqlite3_exec(db_connection, "BEGIN;", NULL, NULL, NULL);
 		for (const auto& img : imgs)
 		{
 			retval.emplace_back(insert_image(db_connection, img, usually_id, false));
 			++usually_id;
 		}
-		sqlite3_exec(db_connection, "END TRANSACTION;", NULL, NULL, NULL);
+		sqlite3_exec(db_connection, "END;", NULL, NULL, NULL);
 
 		return retval;
 	}
