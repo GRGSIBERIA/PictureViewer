@@ -10,11 +10,16 @@ namespace db
 
 	const bool connectDB()
 	{
-		if (isOpenDB == false && sqlite3_open(path.toUTF8().c_str(), &connection) == SQLITE_OK)
+		auto ok = sqlite3_open(path.toUTF8().c_str(), &connection);
+		if (isOpenDB == false && ok == SQLITE_OK)
 		{
 			isOpenDB = true;
+			sqlite3_exec(connection, "pragma FOREIGN_KEYS=ON;", NULL, NULL, NULL);
 		}
-		sqlite3_exec(connection, "pragma FOREIGN_KEYS=ON;", NULL, NULL, NULL);
+		else if (ok != SQLITE_OK)
+		{
+			Logger.writeln(U"OCCURRED TO FAIL TO OPEN DATABASE >> {}"_fmt(ok));
+		}
 		return isOpenDB;
 	}
 
@@ -25,5 +30,16 @@ namespace db
 			isOpenDB = false;
 		}
 		return !isOpenDB;
+	}
+
+	const bool rollbackDB()
+	{
+		char* err_msg = nullptr;
+		auto ok = sqlite3_exec(connection, "rollback;", NULL, NULL, &err_msg);
+		if (ok != SQLITE_OK)
+		{
+			Logger.writeln(Unicode::FromUTF8(err_msg));
+			sqlite3_free(err_msg);
+		}
 	}
 }

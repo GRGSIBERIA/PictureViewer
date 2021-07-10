@@ -6,6 +6,8 @@
 
 void Main()
 {
+	const bool FORCE_DEBUG_MODE = true;
+
 	// 背景を水色にする
 	Scene::SetBackground(Palette::Gray);
 
@@ -16,15 +18,25 @@ void Main()
 	conf::Config config = conf::initialize();
 	
 	db::connectDB();
+	db::rollbackDB();
 
-	db::manually_drop_tables(db::connection);	// !!! テーブルを手動ですべて削除
+	if (FORCE_DEBUG_MODE)
+		db::manually_drop_tables(db::connection);	// !!! テーブルを手動ですべて削除
+
 	db::create_tables(db::connection);
 	
 	while (System::Update())
 	{
 		if (SimpleGUI::Button(U"Import", { 0, 0 }))
 		{
-			s3d::Dialog::SelectFolder();
+			const auto path = s3d::Dialog::SelectFolder();
+			if (path.has_value())
+			{
+				path.then([](const auto& p)
+					{
+
+					});
+			}
 		}
 	}
 
