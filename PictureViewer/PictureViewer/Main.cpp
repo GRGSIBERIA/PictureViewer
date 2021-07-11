@@ -3,6 +3,9 @@
 #include "Database.hpp"
 #include "Table.hpp"
 #include "Config.hpp"
+#include "Directory.hpp"
+
+
 
 void Main()
 {
@@ -30,13 +33,13 @@ void Main()
 		if (SimpleGUI::Button(U"Import", { 0, 0 }))
 		{
 			const auto path = s3d::Dialog::SelectFolder();
-			if (path.has_value())
-			{
-				path.then([](const auto& p)
-					{
-
-					});
-			}
+			
+			path.then([](const auto& p) 
+				{
+					const auto files = dir::get_filenames(p);
+					const auto images = dir::get_images(files);
+					db::insert_images(db::connection, images);
+				});
 		}
 	}
 
