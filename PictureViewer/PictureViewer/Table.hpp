@@ -90,6 +90,11 @@ namespace db
 		const std::string thumb_digest;
 	};
 
+	/// <summary>
+	/// まだ使われていないimage_t.idを取得する
+	/// </summary>
+	/// <param name="db_connection"></param>
+	/// <returns>max(image_t.id) + 1</returns>
 	const int64 get_unuse_id(sqlite3* db_connection)
 	{
 		sqlite3_stmt* statement;
@@ -163,7 +168,7 @@ namespace db
 		return retval;
 	}
 
-	const Array<ImagePack> insert_images(sqlite3* db_connection, const Array<Image> imgs)
+	const Array<ImagePack> insert_images(sqlite3* db_connection, const Array<Image>& imgs)
 	{
 		Array<ImagePack> retval;
 		auto usually_id = get_unuse_id(db_connection);

@@ -21,6 +21,7 @@ create table if not exists tag_t (
 );
 
 create table if not exists tag_assign_t (
+	id integer primary key autoincrement unique not null,
 	imageid integer not null references image_t(id) on update cascade on delete cascade,
 	tagid integer not null references tag_t(id) on update cascade on delete cascade
 );

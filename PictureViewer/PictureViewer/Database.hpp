@@ -40,6 +40,8 @@ namespace db
 		{
 			Logger.writeln(Unicode::FromUTF8(err_msg));
 			sqlite3_free(err_msg);
+			return false;
 		}
+		return true;
 	}
 }
