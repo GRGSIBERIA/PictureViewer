@@ -2,7 +2,8 @@
 #include <Siv3D.hpp>
 #include <sqlite3.h>
 #include <Windows.h>
-#include "Database.hpp"
+
+#include "Query.hpp"
 
 namespace db
 {
@@ -78,15 +79,6 @@ namespace db
 		return occured_error_writes_message_to_log(ok, err_msg);
 	}
 
-	struct ImagePack
-	{
-		const int64 id;
-		const Image source;
-		const Image thumb;
-		const std::string source_digest;
-		const std::string thumb_digest;
-	};
-
 	/// <summary>
 	/// まだ使われていないimage_t.idを取得する
 	/// </summary>
@@ -104,78 +96,7 @@ namespace db
 		return id;
 	}
 
-	class Query
-	{
-	protected:
-		sqlite3_stmt* statement = nullptr;
-
-	public:
-		virtual ~Query()
-		{
-			sqlite3_finalize(statement);
-		}
-	};
-
-	class InsertImage : public Query
-	{
-		int s_id;
-		int s_iw;
-		int s_ih;
-		int s_idigest;
-		int s_idata;
-		int s_tw;
-		int s_th;
-		int s_tdigest;
-		int s_tdata;
-
-	public:
-		InsertImage(sqlite3* db)
-		{
-			sqlite3_prepare_v2(
-				db,
-				"insert"
-				"  into image_t(id, width, height, digest, data) values(:id, :iw, :ih, :idigest, :idata);"
-				"insert"
-				"  into thumb_t(imageid, width, height, digest, data) values (:id, :tw, :th, :tdigest, :tdata);",
-				-1, &statement, nullptr);
-
-			s_id = sqlite3_bind_parameter_index(statement, ":id");
-			s_iw = sqlite3_bind_parameter_index(statement, ":iw");
-			s_ih = sqlite3_bind_parameter_index(statement, ":ih");
-			s_idigest = sqlite3_bind_parameter_index(statement, ":idigest");
-			s_idata = sqlite3_bind_parameter_index(statement, ":idata");
-			s_tw = sqlite3_bind_parameter_index(statement, ":tw");
-			s_th = sqlite3_bind_parameter_index(statement, ":th");
-			s_tdigest = sqlite3_bind_parameter_index(statement, ":tdigest");
-			s_tdata = sqlite3_bind_parameter_index(statement, ":tdata");
-		}
-
-		void insert(const ImagePack& retval, sqlite3* connection)
-		{
-			sqlite3_bind_int64(statement, s_id, retval.id);
-			sqlite3_bind_int(statement, s_iw, retval.source.width());
-			sqlite3_bind_int(statement, s_ih, retval.source.height());
-			sqlite3_bind_text(statement, s_idigest, retval.source_digest.c_str(), (int)retval.source_digest.size(), nullptr);
-			sqlite3_bind_blob(statement, s_idata, (void*)retval.source.data(), (int)retval.source.size_bytes(), nullptr);
-			sqlite3_bind_int(statement, s_tw, retval.thumb.width());
-			sqlite3_bind_int(statement, s_th, retval.thumb.height());
-			sqlite3_bind_text(statement, s_tdigest, retval.thumb_digest.c_str(), (int)retval.thumb_digest.size(), nullptr);
-			sqlite3_bind_blob(statement, s_tdata, (void*)retval.thumb.data(), (int)retval.thumb.size_bytes(), nullptr);
-			
-			auto ok = sqlite3_step(statement);
-			if (ok != SQLITE_DONE)
-			{
-				const auto* msg = sqlite3_errmsg(connection);
-				Logger << Unicode::WidenAscii(msg);
-			}
-
-			sqlite3_reset(statement);
-		}
-
-		virtual ~InsertImage() {}
-	};
-
-	const ImagePack insert_image(sqlite3* db_connection, const Image& source, const int64 usually_id = -1, const bool use_transaction = true)
+	const ImagePack insert_image(sqlite3* db_connection, const Image& source, const int64 usually_id = -1)
 	{
 		int64 id = usually_id;
 		const double wh = source.width() > source.height() ? (double)source.width() : (double)source.height();
@@ -185,10 +106,6 @@ namespace db
 		const std::string source_digest = Unicode::NarrowAscii(get_digest(source));
 		const std::string thumb_digest = Unicode::NarrowAscii(get_digest(thumb));
 		
-		if (use_transaction)
-		{
-			sqlite3_exec(db_connection, "BEGIN;", NULL, NULL, NULL);
-		}
 		if (usually_id < 0)
 		{
 			id = get_unuse_id(db_connection);
@@ -199,30 +116,28 @@ namespace db
 			std::move(source_digest), std::move(thumb_digest) 
 		};
 		
-		static std::shared_ptr<InsertImage> invoker = nullptr;
+		// メソッドの中でシングルトンにしている
+		// 呼び出し元が限定されているので、こういう書き方ができる
+		typedef std::shared_ptr<query::InsertImage> InsertImagePtr;
+		static InsertImagePtr invoker = nullptr;
 		if (invoker == nullptr)
-			invoker = std::shared_ptr<InsertImage>(new InsertImage(db_connection));
-		invoker->insert(retval, db_connection);
+			invoker = InsertImagePtr(new query::InsertImage(db_connection));
+		invoker->insert(retval);
 
-		if (use_transaction)
-		{
-			sqlite3_exec(db_connection, "END;", NULL, NULL, NULL);
-		}
-
-		return retval;
+		return std::move(retval);
 	}
 
 	const Array<ImagePack> insert_images(sqlite3* db_connection, const Array<Image>& imgs)
 	{
 		Array<ImagePack> retval;
 		auto usually_id = get_unuse_id(db_connection);
-		sqlite3_exec(db_connection, "BEGIN;", NULL, NULL, NULL);
+		sqlite3_exec(db_connection, "BEGIN TRANSACTION INSERT_IMAGE;", NULL, NULL, NULL);
 		for (const auto& img : imgs)
 		{
-			retval.emplace_back(insert_image(db_connection, img, usually_id, false));
+			retval.emplace_back(insert_image(db_connection, img, usually_id));
 			++usually_id;
 		}
-		sqlite3_exec(db_connection, "END;", NULL, NULL, NULL);
+		sqlite3_exec(db_connection, "COMMIT TRANSACTION INSERT_IMAGE;", NULL, NULL, NULL);
 
 		return retval;
 	}

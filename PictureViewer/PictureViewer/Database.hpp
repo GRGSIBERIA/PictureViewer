@@ -8,6 +8,15 @@ namespace db
 	String path = U"./database.db";
 	bool isOpenDB = false;
 
+	struct ImagePack
+	{
+		const int64 id;
+		const Image source;
+		const Image thumb;
+		const std::string source_digest;
+		const std::string thumb_digest;
+	};
+
 	const bool connectDB()
 	{
 		auto ok = sqlite3_open(path.toUTF8().c_str(), &connection);

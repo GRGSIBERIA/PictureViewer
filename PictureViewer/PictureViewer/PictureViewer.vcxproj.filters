@@ -412,5 +412,8 @@
     <ClInclude Include="Directory.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Query.hpp">
+      <Filter>Header Files\Database</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
