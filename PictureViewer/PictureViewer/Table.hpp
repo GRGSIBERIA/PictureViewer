@@ -124,7 +124,7 @@ namespace db
 			invoker = InsertImagePtr(new query::InsertImage(db_connection));
 		invoker->insert(retval);
 
-		return std::move(retval);
+		return retval;
 	}
 
 	const Array<ImagePack> insert_images(sqlite3* db_connection, const Array<Image>& imgs)
