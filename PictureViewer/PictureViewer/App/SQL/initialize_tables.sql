@@ -27,3 +27,22 @@ create table if not exists tag_assign_t (
 );
 
 create unique index if not exists imageid_tagid_tag_assign_index on tag_assign_t(imageid, tagid);
+
+create table if not exists property_t (
+	id integer primary key autoincrement unique not null,
+	imageid integer not null references image_t(id) on update cascade on delete cascade,
+	key text,
+	store text
+);
+
+create index if not exists imageid_property_index on property_t(imageid);
+create unique index if not exists imageid_key_property_index on property_t(imageid, key);
+
+create table if not exists rectangle_t (
+	id integer primary key autoincrement unique not null,
+	assignid integer not null references tag_assign_t(id) on update cascade on delete cascade,
+	x integer,
+	y integer,
+	width integer,
+	height integer
+);

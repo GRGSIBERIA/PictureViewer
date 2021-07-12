@@ -36,9 +36,12 @@ void Main()
 			
 			path.then([](const auto& p) 
 				{
-					const auto files = dir::get_filenames(p);
-					const auto images = dir::get_images(files);
-					db::insert_images(db::connection, images);
+					std::thread task([p]() {
+						const auto files = dir::get_filenames(p);
+						const auto images = dir::get_images(files);
+						db::insert_images(db::connection, images);
+						});
+					task.detach();
 				});
 		}
 	}
