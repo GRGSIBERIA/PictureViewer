@@ -421,5 +421,8 @@
     <ClInclude Include="ClassicButton.hpp">
       <Filter>Header Files\Widgets</Filter>
     </ClInclude>
+    <ClInclude Include="Widget.hpp">
+      <Filter>Header Files\Widgets</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

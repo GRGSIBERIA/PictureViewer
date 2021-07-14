@@ -33,8 +33,7 @@ void Main()
 	
 	while (System::Update())
 	{
-		const auto import_reg = import_button.draw(
-			Vec2{ Window::ClientWidth() - import_button.size().x, 0 } + Vec2{-16, 8}, { 4, 4 });
+		const auto import_reg = import_button.draw({ 8, 8 }, { 4, 4 });
 
 		if (import_reg.leftClicked())
 		{
