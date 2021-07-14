@@ -19,9 +19,14 @@ namespace classic
 			auto reg = font(text).region(pos);
 			reg.size += 2.0 * pad;
 
-			reg.draw(fore_color);					// ƒ{ƒ^ƒ“‚Ì˜gü‚ğ•`‰æ
-			reg.drawFrame(1, frame_color);			// ƒtƒŒ[ƒ€‚ğ•`‰æ
-			font(text).draw(pos + pad, font_color); // •¶š‚ğ•`‰æ
+			Line(reg.tl(), reg.tr()).draw(1, specC);
+			Line(reg.tl(), reg.bl()).draw(1, specC);
+			Line(reg.tr(), reg.br()).draw(1, shadowC);
+			Line(reg.bl(), reg.br()).draw(1, shadowC);
+
+			reg.draw(foreC);					// ƒ{ƒ^ƒ“‚Ì˜gü‚ğ•`‰æ
+
+			font(text).draw(pos + pad, fontC); // •¶š‚ğ•`‰æ
 
 			return reg;
 		}
