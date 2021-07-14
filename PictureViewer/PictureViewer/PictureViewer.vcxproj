@@ -244,6 +244,7 @@
     <ClInclude Include="Config.hpp" />
     <ClInclude Include="Database.hpp" />
     <ClInclude Include="Directory.hpp" />
+    <ClInclude Include="ClassicProgress.hpp" />
     <ClInclude Include="Query.hpp" />
     <ClInclude Include="sqlite3.h" />
     <ClInclude Include="sqlite3ext.h" />

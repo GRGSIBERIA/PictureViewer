@@ -6,6 +6,7 @@
 #include "Directory.hpp"
 
 #include "ClassicButton.hpp"
+#include "ClassicProgress.hpp"
 
 void Main()
 {
@@ -22,6 +23,7 @@ void Main()
 	conf::Config config = conf::initialize();
 
 	classic::Button import_button(fontS, U"フォルダの読み込み");
+	classic::Progress import_progress(fontS);
 	
 	db::connectDB();
 	db::rollbackDB();
@@ -49,6 +51,9 @@ void Main()
 					task.detach();
 				});
 		}
+
+		const auto import_progress_reg = import_progress.draw(
+			import_reg.tr() + Vec2{ 8, 0 }, { 4, 4 }, (float)Window::ClientWidth() - (import_reg.x + import_reg.w + 16));
 	}
 
 	db::closeDB();

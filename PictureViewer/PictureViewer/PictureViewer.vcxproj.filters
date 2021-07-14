@@ -424,5 +424,8 @@
     <ClInclude Include="Widget.hpp">
       <Filter>Header Files\Widgets</Filter>
     </ClInclude>
+    <ClInclude Include="ClassicProgress.hpp">
+      <Filter>Header Files\Widgets</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

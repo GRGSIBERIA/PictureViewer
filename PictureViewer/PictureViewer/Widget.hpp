@@ -12,17 +12,18 @@ namespace classic
 		const Color specC = Color(245, 243, 245);
 		const Color shadowC = Color(23, 23, 23);
 		const Color fillC = Color(1, 8, 133);
-		const Color voidC = Color(255, 255, 255);
+		const Color avoidC = Color(255, 255, 255);
+		const Color dentC = Color(128, 128, 128);
 
 		const Font& font;
-		const String text;
-		const Size text_size;
 
 	public:
-		Widget(const Font& font, const String& text) 
-			: font(font), text(text), text_size(font(text).region().size)
+		Widget(const Font& font) 
+			: font(font)
 		{
 
 		}
+
+		virtual ~Widget() {}
 	};
 }
