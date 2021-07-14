@@ -6,7 +6,7 @@ namespace classic
 	class Widget
 	{
 	protected:
-		const Color foreC = Color(214, 207, 201);
+		const Color foreC = Color(192, 192, 192);
 		const Color frameC = Palette::Black;
 		const Color fontC = Palette::Black;
 		const Color specC = Color(245, 243, 245);

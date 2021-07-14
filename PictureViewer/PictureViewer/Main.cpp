@@ -13,7 +13,7 @@ void Main()
 	const bool FORCE_DEBUG_MODE = true;
 
 	// 背景を水色にする
-	Scene::SetBackground(Color(214, 207, 201));
+	Scene::SetBackground(Color(192, 192, 192));
 
 	setlocale(LC_ALL, "");
 
@@ -53,7 +53,7 @@ void Main()
 		}
 
 		const auto import_progress_reg = import_progress.draw(
-			import_reg.tr() + Vec2{ 8, 0 }, { 4, 4 }, (float)Window::ClientWidth() - (import_reg.x + import_reg.w + 16));
+			import_reg.tr() + Vec2{ 8, 0 }, { 4, 4 }, (float)Window::ClientWidth() - (float)(import_reg.x + import_reg.w) - 16.0f);
 	}
 
 	db::closeDB();
