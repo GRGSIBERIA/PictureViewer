@@ -5,20 +5,23 @@
 #include "Config.hpp"
 #include "Directory.hpp"
 
-
+#include "ClassicButton.hpp"
 
 void Main()
 {
 	const bool FORCE_DEBUG_MODE = true;
 
 	// 背景を水色にする
-	Scene::SetBackground(Palette::Gray);
+	Scene::SetBackground(Color(214, 207, 201));
 
 	setlocale(LC_ALL, "");
 
 	// 大きさ 60 のフォントを用意
 	const Font font(60);
+	const Font fontS(12, FileSystem::SpecialFolderPath(SpecialFolder::SystemFonts) + U"msgothic.ttc");
 	conf::Config config = conf::initialize();
+
+	classic::Button import_button(fontS, U"フォルダの読み込み");
 	
 	db::connectDB();
 	db::rollbackDB();
@@ -30,7 +33,10 @@ void Main()
 	
 	while (System::Update())
 	{
-		if (SimpleGUI::Button(U"Import", { 0, 0 }))
+		const auto import_reg = import_button.draw(
+			Vec2{ Window::ClientWidth() - import_button.size().x, 0 } + Vec2{-16, 8}, { 4, 4 });
+
+		if (import_reg.leftClicked())
 		{
 			const auto path = s3d::Dialog::SelectFolder();
 			

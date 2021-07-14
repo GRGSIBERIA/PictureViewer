@@ -240,6 +240,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ClassicButton.hpp" />
     <ClInclude Include="Config.hpp" />
     <ClInclude Include="Database.hpp" />
     <ClInclude Include="Directory.hpp" />

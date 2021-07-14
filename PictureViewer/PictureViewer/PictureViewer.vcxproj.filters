@@ -106,6 +106,9 @@
     <Filter Include="Resource Files\sql">
       <UniqueIdentifier>{214bc7ca-6834-4aa5-886d-d59ccf3432d7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Widgets">
+      <UniqueIdentifier>{2d0bca0a-3d81-48c9-924f-2bd59845a563}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -414,6 +417,9 @@
     </ClInclude>
     <ClInclude Include="Query.hpp">
       <Filter>Header Files\Database</Filter>
+    </ClInclude>
+    <ClInclude Include="ClassicButton.hpp">
+      <Filter>Header Files\Widgets</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
