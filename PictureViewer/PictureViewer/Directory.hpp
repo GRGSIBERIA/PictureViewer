@@ -5,6 +5,8 @@
 #include <future>
 #include <thread>
 
+#include "ClassicProgress.hpp"
+
 namespace dir
 {
 	namespace fs = std::filesystem;
@@ -21,20 +23,23 @@ namespace dir
 			
 			if (ext == U"png" || ext == U"jpg" || ext == U"jpeg")
 			{
-				files.emplace_back(std::move(path));
+				files.emplace_back(path);
 			}
 		}
 		return files;
 	}
 
-	const Array<Image> get_images(const Array<String>& files)
+	const Array<Image> get_images(const Array<String>& files, classic::Progress& progress)
 	{
 		Array<Image> images;
 
+		int i = 0;
 		for (const auto& file : files)
 		{
 			auto img = s3d::Image(file);
 			images.push_back(img);
+			++i;
+			progress.update((float)i, (float)file.size() * 2.0f);
 		}
 
 		return images;

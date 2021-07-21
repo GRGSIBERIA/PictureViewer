@@ -41,12 +41,13 @@ void Main()
 		{
 			const auto path = s3d::Dialog::SelectFolder();
 			
-			path.then([](const auto& p) 
+			path.then([&](const auto& p) 
 				{
-					std::thread task([p]() {
+					std::thread task([&]() {
 						const auto files = dir::get_filenames(p);
-						const auto images = dir::get_images(files);
-						db::insert_images(db::connection, images);
+						//import_progress.update(0, files.size());
+						const auto images = dir::get_images(files, import_progress);
+						db::insert_images(db::connection, images, import_progress);
 						});
 					task.detach();
 				});

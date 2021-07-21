@@ -4,6 +4,7 @@
 #include <Windows.h>
 
 #include "Query.hpp"
+#include "ClassicProgress.hpp"
 
 namespace db
 {
@@ -127,15 +128,18 @@ namespace db
 		return retval;
 	}
 
-	const Array<ImagePack> insert_images(sqlite3* db_connection, const Array<Image>& imgs)
+	const Array<ImagePack> insert_images(sqlite3* db_connection, const Array<Image>& imgs, classic::Progress& progress)
 	{
 		Array<ImagePack> retval;
 		auto usually_id = get_unuse_id(db_connection);
 		sqlite3_exec(db_connection, "BEGIN TRANSACTION INSERT_IMAGE;", NULL, NULL, NULL);
+		int i = 0;
 		for (const auto& img : imgs)
 		{
 			retval.emplace_back(insert_image(db_connection, img, usually_id));
 			++usually_id;
+			++i;
+			progress.update((float)i + (float)imgs.size(), (float)imgs.size() * 2.0f);
 		}
 		sqlite3_exec(db_connection, "COMMIT TRANSACTION INSERT_IMAGE;", NULL, NULL, NULL);
 

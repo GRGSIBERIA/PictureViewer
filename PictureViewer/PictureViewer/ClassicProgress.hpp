@@ -1,5 +1,6 @@
 #pragma once
 #include <Siv3D.hpp>
+#include <mutex>
 #include "Widget.hpp"
 
 namespace classic
@@ -8,6 +9,7 @@ namespace classic
 	{
 		float val = 1.0f;
 		float maximum = 1.0f;
+		std::mutex vallock;
 
 	public:
 		Progress(const Font& font)
@@ -20,13 +22,19 @@ namespace classic
 
 		void update(float _val, float _maximum)
 		{
+			std::scoped_lock lock{ vallock };
 			val = _val;
 			maximum = _maximum;
 		}
 
-		const RectF draw(const Vec2& pos, const Vec2& pad, const float width) const
+		const RectF draw(const Vec2& pos, const Vec2& pad, const float width)
 		{
-			const String percent = U"{0:>3} %"_fmt((int)((val / maximum) * 100.0));
+			float percent_val;
+			{
+				std::scoped_lock lock{ vallock };
+				percent_val = (val / maximum) * 100.0f;
+			}
+			const String percent = U"{0:>3} %"_fmt((int)percent_val);
 			
 			auto reg = font(percent).region(pos);
 			reg.w = width;
